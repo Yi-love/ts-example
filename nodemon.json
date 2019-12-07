@@ -1,0 +1,12 @@
+{
+    "verbose": true,
+    "delay": "1000",
+    "dump": false,
+    "env": {
+        "NODE_ENV": "development"
+    },
+    "watch": [
+        "src/*"
+    ],
+    "ext": "js, json, ts"
+}
