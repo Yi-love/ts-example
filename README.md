@@ -1,0 +1,2 @@
+# ts-example
+study TypeScript
