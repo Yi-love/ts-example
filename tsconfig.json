@@ -9,7 +9,9 @@
         "strict": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "pretty": true
+        "pretty": true,
+        "strictPropertyInitialization": false,
+        "stripInternal": true
     },
     "exclude": [
         "dist",
