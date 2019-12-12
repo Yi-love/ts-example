@@ -35,4 +35,4 @@ export class Coo {
 
 let coco: Coo = new Coo();
 
-console.log('getState------------>', coco.getState());
+console.log('getState------------>', coco.getState(), coco.xx);
