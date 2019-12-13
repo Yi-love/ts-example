@@ -5,34 +5,34 @@ function provide(name?:string) {
         return target;
     };
 }
-
 function configurable(value:boolean){
-    return function(a:any,b:string,c:PropertyDescriptor){
-        console.log('[configurable]----->', a ,b ,c);
-        c.configurable = value;
+    return function(target:any,key:string,descriptor:PropertyDescriptor){
+        console.log('[configurable]----->', target , key ,descriptor);
+        descriptor.configurable = value;
     }
 }
 function inject(name?:string){
-    return function(a:any,b:string){
-        console.log('[inject]----->', name,  a, b);
+    return function(target:any,key:string){
+        console.log('[inject]----->', name,  target, key);
     }
 }
+function required(target: Object, propertyKey: string | symbol, parameterIndex: number) {
+    console.log('[required]------>', target, propertyKey, parameterIndex);
+}
 
-@provide()
-export class Coo {
-    _gt: string;
-    _color: string;
+@provide()//类装饰器
+export class Computer {
+    x: number;
+
+    @inject()//属性装饰器
+    y:number;
     
-    @inject()
-    xx:string;
-
-    @configurable(true)
-    getState(){
-        return this._gt;
+    @configurable(true)//方法装饰器
+    getTotal(@required z: number){//参数装饰器
+        return this.x * this.y * z;
     }
-
 }
 
-let coco: Coo = new Coo();
+let computer: Computer = new Computer();
 
-console.log('getState------------>', coco.getState(), coco.xx);
+console.log('total------------>', computer.getTotal(1));
