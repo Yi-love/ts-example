@@ -1,4 +1,5 @@
-import {provide, inject, controller , Context, get} from './ioc';
+import { Context } from './interface';
+import {provide, inject, controller, get} from './ioc';
 
 @provide()
 @controller('/stock')

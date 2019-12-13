@@ -1,14 +1,14 @@
 import 'reflect-metadata';
-import  {constructorMap} from './init';
-import { TagPropsMetadata }from  './interface';
 const Koa = require('koa');
 const KoaRouter = require('koa-router');
+
+import  {constructorMap} from './init';
+import { TagPropsMetadata }from  './interface';
+
 const app = new Koa();
 
 import {TAGGED_CLS, PRELOAD_MODULE_KEY, CONTROLLER_KEY, CONTROLLER_DATA_KEY, WEB_ROUTER_KEY, TAGGED_PROP} from './keys';
 import {listModule} from './decoratorManager';
-
-let controllerIds = [];
 
 interface RouterOption {
     path: string,
@@ -16,36 +16,53 @@ interface RouterOption {
     requestMethod: string
 }
 
-//  获取路由数据
+/**
+ * 获取路由数据，创建路由列表
+ *
+ * @param {*} target
+ * @param {string} controllerId
+ * @returns
+ */
 function preRegisterRouter(target: any, controllerId: string){
 
-    //获取路由前缀
+    //获取路由对象
     let originModuleMap = Reflect.getMetadata(PRELOAD_MODULE_KEY, target);
+    // 获取路由对象，路由数据
     const controllerOption = originModuleMap.get(CONTROLLER_DATA_KEY);
-    console.log('[preRegisterRouter] controller option:', controllerOption);
-
     //创建路由
     let router = createRouter(controllerOption);
     if (router){
         let originMap = Reflect.getMetadata(PRELOAD_MODULE_KEY, target);
         let routerOption: RouterOption[] = originMap.get(WEB_ROUTER_KEY);
-        console.log('[preRegisterRouter] get router option: ', routerOption);
         if (routerOption && typeof routerOption[Symbol.iterator] === 'function'){
+            // 路由列表生成
             for (const webRouter of routerOption) {
+                //路由定义
                 router[webRouter.requestMethod](webRouter.path, generateController(controllerId, webRouter.method));
             }
         }
-        console.log('[preRegisterRouter] router is ok......');
         return router;
     }
-    console.log('[preRegisterRouter] is no......');
     return null;
 }
 
+/**
+ *生成路由对应的回调函数
+ *
+ * @param {string} controllerId
+ * @param {string} method
+ * @returns
+ */
 function generateController(controllerId: string, method: string){
-    console.log('[generateController] controller init ....', controllerId , method, constructorMap[controllerId]);
-
     let classList : any = {};
+    
+    /**
+     *创建controller实例，递归实例化依赖
+     *
+     * @param {*} identifier
+     * @param {*} ctx
+     * @returns
+     */
     function createRealClass(identifier: any, ctx:any){
         if (identifier === 'ctx') {
             return ctx;
@@ -54,29 +71,37 @@ function generateController(controllerId: string, method: string){
             return classList[identifier];
         }
 
-        console.log('------------>', identifier, constructorMap[identifier]);
+        // 创建controller实例
         let cls = new constructorMap[identifier].creater();
+        
+        classList[identifier] = cls;
         if (constructorMap[identifier].properties){
             let props = constructorMap[identifier].properties;
-            console.log('props------------->', props);
+            // 如果存在依赖，递归实例化依赖
             for (const prop in props){
                 let metadatas: TagPropsMetadata[] = props[prop];
                 for (let meta of metadatas){
-                    console.log('meta------------>', meta.value);
                     cls[prop] = createRealClass(meta.value, ctx);
                 }
             }
         }
         return cls;
     }
+    // koa controller处理回调
     return async (ctx: any) => {
+        //创建对象
         let contrl = createRealClass(controllerId, ctx);
-        console.log('\n\n---------------->\n', contrl);
+        //执行方法
         await contrl[method].apply(contrl);
     }
 }
 
-// 创建路由
+/**
+ *
+ *针对不同的控制器创建不同前缀的路由列表
+ * @param {*} controllerOption
+ * @returns
+ */
 function createRouter(controllerOption: any){
     let router = new KoaRouter();
     if (controllerOption.prefix){
@@ -86,24 +111,31 @@ function createRouter(controllerOption: any){
     return null;
 }
 
-function preLoad (){
-    const controllerModules = listModule(CONTROLLER_KEY);
 
-    // implement @controller
+/**
+ *初始化创建前端路由
+ *
+ * @returns
+ */
+function preLoad (){
+    // 获取所有controller
+    const controllerModules = listModule(CONTROLLER_KEY);
     for (const module of controllerModules) {
         const metaData = Reflect.getMetadata(TAGGED_CLS, module as any);
         let providerId ='';
         if (metaData) {
             providerId = metaData.id;
         }
-        controllerIds.push(providerId);
+        //根据不同controller创建路由
         return preRegisterRouter(module, providerId);
     }
-    console.log('[preLoad]  error-------------------->');
     return null;
 }
+
+//启动
 let router = preLoad();
 if (router){
+    // 路由扩展
     app.use(router.routes());
 }else {
     app.use((ctx: any )=>{

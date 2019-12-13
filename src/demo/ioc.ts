@@ -9,10 +9,16 @@ import {saveModule} from './decoratorManager';
 
 const camelCase = require('camelcase');
 
+
+/**
+ *提供给外部使用
+ *
+ * @export
+ * @param {ObjectIdentifier} [identifier]
+ * @returns
+ */
 export function provide(identifier?: ObjectIdentifier){
-    console.log('[ioc:provide] create provide...', identifier);
     return function (target:any){
-        console.log('[ioc]:provide running...', target);
         if (typeof target === 'object' && target.constructor) {
             target = target.constructor;
         }
@@ -21,7 +27,6 @@ export function provide(identifier?: ObjectIdentifier){
             throw new Error(DUPLICATED_INJECTABLE_DECORATOR);
         }
 
-        console.log('[ioc:provide] name: ', identifier, target.name);
         //如果不设置名称，默认使用驼峰名称注入
         if (!identifier) {
             identifier = camelCase(target.name);
@@ -35,18 +40,25 @@ export function provide(identifier?: ObjectIdentifier){
 
         initOrGetObjectDefProps(target);
 
+        // 缓存
         saveModule(PROVIDE_KEY, target);
 
         return target;
     }
 }
 
+/**
+ *controller 装饰器
+ *
+ * @export
+ * @param {string} prefix  路由前缀
+ * @returns
+ */
 export function controller(prefix: string){
-    console.log('[ioc:controller] create controller.....', prefix);
     return (target: any) => {
-        console.log('[ioc:controller] run controller.....', target);
-
+        //缓存
         saveModule(CONTROLLER_KEY, target);
+
         if (typeof target === 'object' && target.constructor) {
             target = target.constructor;
         }
@@ -54,30 +66,39 @@ export function controller(prefix: string){
         if (!Reflect.hasMetadata(PRELOAD_MODULE_KEY, target)) {
             Reflect.defineMetadata(PRELOAD_MODULE_KEY, new Map(), target);
         }
+        // 缓存controller 参数
         let originMap = Reflect.getMetadata(PRELOAD_MODULE_KEY, target);
-        console.log('[controller] map------------>', originMap);
         originMap.set(CONTROLLER_DATA_KEY, {prefix});
-
-        console.log('[ioc:controller] controller map....------>', originMap);
     };
-  }
+}
 
+/**
+ *inject 注入装饰器，表示当前参数依赖
+ *
+ * @export
+ * @param {ObjectIdentifier} [identifier]
+ * @returns
+ */
 export function inject(identifier?: ObjectIdentifier){
-    console.log('[ioc:inject] create inject...', identifier);
     return function(target:any, key:string){
-        console.log('[ioc]:inject running...', target, key);
         if (!identifier) {
             identifier = key;
         }
         const metadata = new Metadata(INJECT_TAG, identifier);
+        // 缓存依赖
         tagProperty(target, key, metadata);
     }
 }
 
+/**
+ * get方法装饰器
+ *
+ * @export
+ * @param {string} path
+ * @returns
+ */
 export function get(path: string){
-    console.log('[ioc:get] create get...', path);
     return function(target:any, key:string, descriptor: PropertyDescriptor){
-        console.log('[ioc]:get running...', target, key, descriptor);
         // for class
         if (typeof target === 'object' && target.constructor) {
             target = target.constructor;
@@ -85,22 +106,17 @@ export function get(path: string){
         if (!Reflect.hasMetadata(PRELOAD_MODULE_KEY, target)) {
             Reflect.defineMetadata(PRELOAD_MODULE_KEY, new Map(), target);
         }
+        // 为当前controller模块,创建方法map
         let originMap = Reflect.getMetadata(PRELOAD_MODULE_KEY, target);
-        console.log('[get] start------------>', originMap);
         if (!originMap.has(WEB_ROUTER_KEY)) {
             originMap.set(WEB_ROUTER_KEY, []);
         }
+        // 将方法依赖缓存
         originMap.get(WEB_ROUTER_KEY).push({
             path: path,
             method: key,
             requestMethod: 'get'
         });
-        console.log('[get] end------------>', originMap, Reflect.getMetadata(PRELOAD_MODULE_KEY, target));
         return descriptor;
     }
-}
-
-export interface Context{
-    body: any;
-    render(name:string): Promise<string>;
 }

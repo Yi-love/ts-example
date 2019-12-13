@@ -1,5 +1,12 @@
 export type decoratorKey = string | symbol;
 
+/**
+ *管理依赖
+ *
+ * @export
+ * @class DecoratorManager
+ * @extends {Map}
+ */
 export class DecoratorManager extends Map {
     saveModule(key:any, module:any) {
         if (!this.has(key)) {

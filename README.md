@@ -29,3 +29,5 @@ a injection framework demo.
 ```
 ts-node src/demo/index.ts
 ```
+
+open: [http://127.0.0.1:3000/stock](http://127.0.0.1:3000/stock)

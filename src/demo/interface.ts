@@ -38,4 +38,9 @@ export interface ReflectResult {
  */
 export interface IManagedInstance {
     type: string;
-  }
+}
+
+export interface Context{
+    body: any;
+    render(name:string): Promise<string>;
+}

@@ -13,30 +13,27 @@ function _tagParameterOrProperty(metadataKey: string, annotationTarget: any, pro
     const isParameterDecorator = (typeof parameterIndex === 'number');
     const key: string = (parameterIndex !== undefined && isParameterDecorator) ? parameterIndex.toString() : propertyName;
   
-    // if the decorator is used as a parameter decorator, the property name must be provided
     if (isParameterDecorator && propertyName !== undefined) {
-      throw new Error(INVALID_DECORATOR_OPERATION);
+        throw new Error(INVALID_DECORATOR_OPERATION);
     }
   
-    // read metadata if available
     if (Reflect.hasOwnMetadata(metadataKey, annotationTarget)) {
-      paramsOrPropertiesMetadata = Reflect.getMetadata(metadataKey, annotationTarget);
+        paramsOrPropertiesMetadata = Reflect.getMetadata(metadataKey, annotationTarget);
     }
   
-    // get metadata for the decorated parameter by its index
     let paramOrPropertyMetadata: TagPropsMetadata[] = paramsOrPropertiesMetadata[key];
   
     if (!Array.isArray(paramOrPropertyMetadata)) {
-      paramOrPropertyMetadata = [];
+        paramOrPropertyMetadata = [];
     } else {
-      for (const m of paramOrPropertyMetadata) {
-        if (m.key === metadata.key) {
-          throw new Error(`${DUPLICATED_METADATA} ${m.key.toString()}`);
+        for (const m of paramOrPropertyMetadata) {
+            if (m.key === metadata.key) {
+                throw new Error(`${DUPLICATED_METADATA} ${m.key.toString()}`);
+            }
         }
-      }
     }
   
-    // set metadata
+    // 设置属性
     paramOrPropertyMetadata.push(metadata);
     paramsOrPropertiesMetadata[key] = paramOrPropertyMetadata;
     Reflect.defineMetadata(metadataKey, paramsOrPropertiesMetadata, annotationTarget);
