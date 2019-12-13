@@ -1,11 +1,11 @@
 import 'reflect-metadata';
-import  './controller';
+import  {constructorMap} from './init';
+import { TagPropsMetadata }from  './interface';
 const Koa = require('koa');
 const KoaRouter = require('koa-router');
-
 const app = new Koa();
 
-import {TAGGED_CLS, PRELOAD_MODULE_KEY, CONTROLLER_KEY, CONTROLLER_DATA_KEY, WEB_ROUTER_KEY} from './keys';
+import {TAGGED_CLS, PRELOAD_MODULE_KEY, CONTROLLER_KEY, CONTROLLER_DATA_KEY, WEB_ROUTER_KEY, TAGGED_PROP} from './keys';
 import {listModule} from './decoratorManager';
 
 let controllerIds = [];
@@ -29,14 +29,13 @@ function preRegisterRouter(target: any, controllerId: string){
     if (router){
         let originMap = Reflect.getMetadata(PRELOAD_MODULE_KEY, target);
         let routerOption: RouterOption[] = originMap.get(WEB_ROUTER_KEY);
-
         console.log('[preRegisterRouter] get router option: ', routerOption);
         if (routerOption && typeof routerOption[Symbol.iterator] === 'function'){
             for (const webRouter of routerOption) {
                 router[webRouter.requestMethod](webRouter.path, generateController(controllerId, webRouter.method));
             }
         }
-        console.log('[preRegisterRouter] router is ok......', router);
+        console.log('[preRegisterRouter] router is ok......');
         return router;
     }
     console.log('[preRegisterRouter] is no......');
@@ -44,10 +43,36 @@ function preRegisterRouter(target: any, controllerId: string){
 }
 
 function generateController(controllerId: string, method: string){
-    console.log('[generateController] controller init ....', controllerId , method);
+    console.log('[generateController] controller init ....', controllerId , method, constructorMap[controllerId]);
+
+    let classList : any = {};
+    function createRealClass(identifier: any, ctx:any){
+        if (identifier === 'ctx') {
+            return ctx;
+        }
+        if (classList[identifier]){
+            return classList[identifier];
+        }
+
+        console.log('------------>', identifier, constructorMap[identifier]);
+        let cls = new constructorMap[identifier].creater();
+        if (constructorMap[identifier].properties){
+            let props = constructorMap[identifier].properties;
+            console.log('props------------->', props);
+            for (const prop in props){
+                let metadatas: TagPropsMetadata[] = props[prop];
+                for (let meta of metadatas){
+                    console.log('meta------------>', meta.value);
+                    cls[prop] = createRealClass(meta.value, ctx);
+                }
+            }
+        }
+        return cls;
+    }
     return async (ctx: any) => {
-        console.log('[generateController] controller run ....', method);
-        ctx.body = 'hello ioc';
+        let contrl = createRealClass(controllerId, ctx);
+        console.log('\n\n---------------->\n', contrl);
+        await contrl[method].apply(contrl);
     }
 }
 
@@ -64,17 +89,14 @@ function createRouter(controllerOption: any){
 function preLoad (){
     const controllerModules = listModule(CONTROLLER_KEY);
 
-    console.log('[preLoad]---------------------->', controllerModules);
     // implement @controller
     for (const module of controllerModules) {
-        console.log('[preLoad] module------------>', module);
         const metaData = Reflect.getMetadata(TAGGED_CLS, module as any);
         let providerId ='';
         if (metaData) {
             providerId = metaData.id;
         }
         controllerIds.push(providerId);
-        console.log('[preLoad] meta-------------------->', metaData);
         return preRegisterRouter(module, providerId);
     }
     console.log('[preLoad]  error-------------------->');

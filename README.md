@@ -22,3 +22,10 @@ npm run build
 ```
 ts-node src/*.ts
 ```
+
+## injection
+a injection framework demo.
+
+```
+ts-node src/demo/index.ts
+```

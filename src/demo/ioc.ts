@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import {TAGGED_CLS, INJECT_TAG,PRELOAD_MODULE_KEY,WEB_ROUTER_KEY, CONTROLLER_DATA_KEY, CONTROLLER_KEY} from './keys';
+import {TAGGED_CLS, INJECT_TAG,PRELOAD_MODULE_KEY,WEB_ROUTER_KEY, CONTROLLER_DATA_KEY, CONTROLLER_KEY, PROVIDE_KEY} from './keys';
 import {DUPLICATED_INJECTABLE_DECORATOR} from './errMsg';
 import {ObjectIdentifier, TagClsMetadata} from './interface';
 import {initOrGetObjectDefProps} from './def';
@@ -34,6 +34,8 @@ export function provide(identifier?: ObjectIdentifier){
         } as TagClsMetadata, target);
 
         initOrGetObjectDefProps(target);
+
+        saveModule(PROVIDE_KEY, target);
 
         return target;
     }
@@ -98,6 +100,7 @@ export function get(path: string){
     }
 }
 
-export interface Context {
+export interface Context{
+    body: any;
     render(name:string): Promise<string>;
 }

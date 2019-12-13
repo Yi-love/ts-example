@@ -8,3 +8,5 @@ export const PRELOAD_MODULE_KEY = 'INJECTION_PRELOAD_MODULE_KEY';
 export const WEB_ROUTER_KEY = 'INJECTION_WEB_ROUTER_KEY';
 export const CONTROLLER_DATA_KEY = 'INJECTION_CONTROLLER_DATA_KEY';
 export const CONTROLLER_KEY = 'controller';
+
+export const PROVIDE_KEY ='ioc:class';
