@@ -54,41 +54,42 @@ function preRegisterRouter(target: any, controllerId: string){
  * @returns
  */
 function generateController(controllerId: string, method: string){
-    let classList : any = {};
-    
-    /**
-     *创建controller实例，递归实例化依赖
-     *
-     * @param {*} identifier
-     * @param {*} ctx
-     * @returns
-     */
-    function createRealClass(identifier: any, ctx:any){
-        if (identifier === 'ctx') {
-            return ctx;
-        }
-        if (classList[identifier]){
-            return classList[identifier];
-        }
-
-        // 创建controller实例
-        let cls = new constructorMap[identifier].creater();
-        
-        classList[identifier] = cls;
-        if (constructorMap[identifier].properties){
-            let props = constructorMap[identifier].properties;
-            // 如果存在依赖，递归实例化依赖
-            for (const prop in props){
-                let metadatas: TagPropsMetadata[] = props[prop];
-                for (let meta of metadatas){
-                    cls[prop] = createRealClass(meta.value, ctx);
-                }
-            }
-        }
-        return cls;
-    }
     // koa controller处理回调
     return async (ctx: any) => {
+        let classList : any = {};
+    
+        /**
+         *创建controller实例，递归实例化依赖
+         *
+         * @param {*} identifier
+         * @param {*} ctx
+         * @returns
+         */
+        function createRealClass(identifier: any, ctx:any){
+            if (identifier === 'ctx') {
+                return ctx;
+            }
+            if (classList[identifier]){
+                return classList[identifier];
+            }
+    
+            // 创建controller实例
+            let cls = new constructorMap[identifier].creater();
+            
+            classList[identifier] = cls;
+            if (constructorMap[identifier].properties){
+                let props = constructorMap[identifier].properties;
+                // 如果存在依赖，递归实例化依赖
+                for (const prop in props){
+                    let metadatas: TagPropsMetadata[] = props[prop];
+                    for (let meta of metadatas){
+                        cls[prop] = createRealClass(meta.value, ctx);
+                    }
+                }
+            }
+            return cls;
+        }
+        console.log('[resquest].........', controllerId);
         //创建对象
         let contrl = createRealClass(controllerId, ctx);
         //执行方法
