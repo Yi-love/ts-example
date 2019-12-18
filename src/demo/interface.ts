@@ -44,3 +44,9 @@ export interface Context{
     body: any;
     render(name:string): Promise<string>;
 }
+
+export interface RouterOption {
+    path: string,
+    method: string,
+    requestMethod: string
+}

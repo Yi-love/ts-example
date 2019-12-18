@@ -37,4 +37,4 @@ function _tagParameterOrProperty(metadataKey: string, annotationTarget: any, pro
     paramOrPropertyMetadata.push(metadata);
     paramsOrPropertiesMetadata[key] = paramOrPropertyMetadata;
     Reflect.defineMetadata(metadataKey, paramsOrPropertiesMetadata, annotationTarget);
-  }
+}

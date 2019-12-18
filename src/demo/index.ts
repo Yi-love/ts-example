@@ -3,19 +3,28 @@ const Koa = require('koa');
 const KoaRouter = require('koa-router');
 
 import  {constructorMap} from './init';
-import { TagPropsMetadata }from  './interface';
+import { TagPropsMetadata, RouterOption }from  './interface';
 
 const app = new Koa();
 
-import {TAGGED_CLS, PRELOAD_MODULE_KEY, CONTROLLER_KEY, CONTROLLER_DATA_KEY, WEB_ROUTER_KEY, TAGGED_PROP} from './keys';
+import {TAGGED_CLS, PRELOAD_MODULE_KEY, CONTROLLER_KEY, CONTROLLER_DATA_KEY, WEB_ROUTER_KEY} from './keys';
 import {listModule} from './decoratorManager';
 
-interface RouterOption {
-    path: string,
-    method: string,
-    requestMethod: string
-}
 
+/**
+ *
+ *针对不同的控制器创建不同前缀的路由列表
+ * @param {*} controllerOption
+ * @returns
+ */
+function createRouter(controllerOption: any){
+    let router = new KoaRouter();
+    if (controllerOption.prefix){
+        router.prefix(controllerOption.prefix);
+        return router;
+    }
+    return null;
+}
 /**
  * 获取路由数据，创建路由列表
  *
@@ -89,36 +98,20 @@ function generateController(controllerId: string, method: string){
             }
             return cls;
         }
-        console.log('[resquest].........', controllerId);
+        console.log('[resquest].........', controllerId, method);
         //创建对象
         let contrl = createRealClass(controllerId, ctx);
         //执行方法
         await contrl[method].apply(contrl);
-    }
+    };
 }
-
-/**
- *
- *针对不同的控制器创建不同前缀的路由列表
- * @param {*} controllerOption
- * @returns
- */
-function createRouter(controllerOption: any){
-    let router = new KoaRouter();
-    if (controllerOption.prefix){
-        router.prefix(controllerOption.prefix);
-        return router;
-    }
-    return null;
-}
-
 
 /**
  *初始化创建前端路由
  *
  * @returns
  */
-function preLoad (){
+function preLoad (app: any){
     // 获取所有controller
     const controllerModules = listModule(CONTROLLER_KEY);
     for (const module of controllerModules) {
@@ -128,19 +121,15 @@ function preLoad (){
             providerId = metaData.id;
         }
         //根据不同controller创建路由
-        return preRegisterRouter(module, providerId);
+        const router = preRegisterRouter(module, providerId);
+        if (router){
+            app.use(router.routes());
+        }
     }
-    return null;
 }
 
+preLoad(app);
 //启动
-let router = preLoad();
-if (router){
-    // 路由扩展
-    app.use(router.routes());
-}else {
-    app.use((ctx: any )=>{
-        ctx.body = 'no body';
-    });
-}
 app.listen(3000);
+
+console.log('[app] is running...');

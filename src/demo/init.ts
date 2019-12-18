@@ -16,7 +16,7 @@ for (const module of classMap) {
     constructorMap[identifierObj.id] = {
         creater : module,
         properties
-    }
+    };
 }
 // 创建对象列表
 export {constructorMap};
