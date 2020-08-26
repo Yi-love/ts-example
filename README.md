@@ -17,18 +17,3 @@ npm install
 ```
 npm run build
 ```
-
-## run
-
-```
-ts-node src/*.ts
-```
-
-## injection
-a injection framework demo.
-
-```
-ts-node src/demo/index.ts
-```
-
-open: [http://127.0.0.1:3000/stock](http://127.0.0.1:3000/stock)
